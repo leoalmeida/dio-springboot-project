@@ -3,6 +3,7 @@ package me.dio.dio_springboot_project;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+//@OpenAPIDefinition()
 @SpringBootApplication
 public class DioSpringbootProjectApplication {
 

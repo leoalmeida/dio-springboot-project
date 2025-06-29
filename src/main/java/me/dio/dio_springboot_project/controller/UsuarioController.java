@@ -1,39 +1,38 @@
 package me.dio.dio_springboot_project.controller;
 
-import me.dio.dio_springboot_project.service.UserService;
+import me.dio.dio_springboot_project.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import me.dio.dio_springboot_project.domain.model.Usuario;
-import me.dio.dio_springboot_project.domain.repository.UsuarioRepository;
+import me.dio.dio_springboot_project.dto.UsuarioDto;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("usuarios")
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     @Autowired
-    UserService userService;
+    UsuarioService usuarioService;
 
-    @PostMapping("")
-    public void post(@RequestBody Usuario usuario){
-        userService.criarUsuario(usuario);
+    @PostMapping
+    public void post(@RequestBody UsuarioDto usuarioDto){
+        usuarioService.criarUsuario(usuarioDto);
     }
-    @PutMapping("")
-    public void put(@RequestBody Usuario usuario){
-        userService.alterarUsuario(usuario);
+    @PutMapping
+    public void put(@RequestBody UsuarioDto usuarioDto){
+        usuarioService.alterarUsuario(usuarioDto);
     }
     @GetMapping("{id}")
-    public Usuario getOne(@PathVariable("id") Integer id){
-        return userService.consultarUsuario(id);
+    public UsuarioDto getOne(@PathVariable("id") String id){
+        return usuarioService.consultarUsuario(id);
     }
     @DeleteMapping("{id}")
-    public void delete(@PathVariable("id") Integer id){
-        userService.removerUsuario(id);
+    public void delete(@PathVariable("id") String id){
+        usuarioService.removerUsuario(id);
     }
-    @GetMapping("")
-    public List<Usuario> getAll(){
-        return userService.listarUsuarios();
+    @GetMapping
+    public List<UsuarioDto> getAll(){
+        return usuarioService.listarUsuarios();
     }
 }
 

@@ -2,9 +2,6 @@ package me.dio.dio_springboot_project.unit.controller;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.UUID;
-
-
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
@@ -30,9 +27,7 @@ import me.dio.dio_springboot_project.base.TestFactory;
 import me.dio.dio_springboot_project.controller.ProdutoController;
 import me.dio.dio_springboot_project.core.util.ObjectsValidator;
 import me.dio.dio_springboot_project.domain.model.Produto;
-import me.dio.dio_springboot_project.dto.ClienteDto;
 import me.dio.dio_springboot_project.dto.ProdutoDto;
-import me.dio.dio_springboot_project.dto.mapper.ClienteMapper;
 import me.dio.dio_springboot_project.dto.mapper.ProdutoMapper;
 import me.dio.dio_springboot_project.service.ProdutoService;
 

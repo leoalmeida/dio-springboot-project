@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import me.dio.dio_springboot_project.core.util.ObjectsValidator;
 import me.dio.dio_springboot_project.domain.model.Produto;
 import me.dio.dio_springboot_project.dto.ProdutoDto;
-import me.dio.dio_springboot_project.dto.mapper.ClienteMapper;
 import me.dio.dio_springboot_project.dto.mapper.ProdutoMapper;
 import me.dio.dio_springboot_project.service.ProdutoService;
 

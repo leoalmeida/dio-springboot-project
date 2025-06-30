@@ -7,12 +7,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+
+import me.dio.dio_springboot_project.DioSpringbootProjectApplication;
 import me.dio.dio_springboot_project.controller.ClienteController;
 import me.dio.dio_springboot_project.controller.PedidoController;
 import me.dio.dio_springboot_project.controller.ProdutoController;
 import me.dio.dio_springboot_project.controller.UsuarioController;
 
 @SpringBootTest
+@ContextConfiguration(classes = DioSpringbootProjectApplication.class)
 @ActiveProfiles("test")
 public class SmokeTest {
 

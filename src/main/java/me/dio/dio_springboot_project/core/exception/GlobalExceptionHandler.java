@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice
@@ -46,7 +47,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             UndeclaredThrowableException exception = (UndeclaredThrowableException) e;
             return handleBusinessException((BusinessException) exception.getUndeclaredThrowable(), request);
         } else {
-            String message = messageSource.getMessage("error.server", new Object[]{e.getMessage()}, null);
+            String message = messageSource.getMessage("error.server", new Object[]{e.getMessage()}, Locale.getDefault());
             ResponseError error = responseError(message,HttpStatus.INTERNAL_SERVER_ERROR);
             return handleExceptionInternal(e, error, headers(), HttpStatus.INTERNAL_SERVER_ERROR, request);
         }

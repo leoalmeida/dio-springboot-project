@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import me.dio.dio_springboot_project.core.util.ObjectsValidator;
 import me.dio.dio_springboot_project.domain.model.Produto;
 import me.dio.dio_springboot_project.dto.ProdutoDto;
+import me.dio.dio_springboot_project.dto.mapper.ClienteMapper;
 import me.dio.dio_springboot_project.dto.mapper.ProdutoMapper;
 import me.dio.dio_springboot_project.service.ProdutoService;
 
@@ -35,7 +37,7 @@ public class ProdutoController {
     @Autowired
     private ProdutoService produtoService;
     @Autowired
-    private ObjectsValidator<Produto> produtoValidator;
+    private ObjectsValidator<ProdutoDto> produtoValidator;
 
 
     @GetMapping
@@ -62,16 +64,18 @@ public class ProdutoController {
 
     @PostMapping
     public ResponseEntity<ProdutoDto> criarProduto(@RequestBody ProdutoDto produtoDto) {
-        Produto entity = ProdutoMapper.toProdutoEntity(produtoDto);
-        produtoValidator.validate(entity);
-        Produto savedProduto = produtoService.criarProduto(entity);
-        return new ResponseEntity<>(ProdutoMapper.toProdutoDto(savedProduto), HttpStatus.CREATED);
+        produtoValidator.validate(produtoDto);
+        ProdutoDto savedProduto = ProdutoMapper.toProdutoDto(
+                            produtoService.criarProduto(ProdutoMapper.toProdutoEntity(produtoDto)));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(savedProduto);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ProdutoDto> alterarProduto(@PathVariable String id, @RequestBody ProdutoDto produto) {
+        produtoValidator.validate(produto);
         Produto entity = ProdutoMapper.toProdutoEntity(produto);
-        produtoValidator.validate(entity);
         return produtoService.buscarProdutoPorId(id)
                 .map(existingProduto -> produtoService.alterarProduto(existingProduto.updateData(entity)))
                 .map(ProdutoMapper::toProdutoDto)

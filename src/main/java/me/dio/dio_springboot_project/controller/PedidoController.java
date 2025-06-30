@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,11 +42,11 @@ public class PedidoController {
     @Autowired
     private ObjectsValidator<ItemPedidoDto> itemPedidoValidator;
     @Autowired
-    private ObjectsValidator<Pedido> pedidoValidator;
+    private ObjectsValidator<PedidoDto> pedidoValidator;
 
 
     @GetMapping
-    public ResponseEntity<List<PedidoDto>> getAllOrders() {
+    public ResponseEntity<List<PedidoDto>> buscarTodosPedidos() {
         List<PedidoDto> pedidos = PedidoMapper.toListPedidoDto(pedidoService.buscarTodosPedidos());
         return ResponseEntity.ok(pedidos);
     }
@@ -67,21 +68,24 @@ public class PedidoController {
     }
 
     @GetMapping("/cliente/{idCliente}")
-    public ResponseEntity<List<PedidoDto>> buscarPedidosPorCustomerId(@PathVariable String idCliente) {
+    public ResponseEntity<List<PedidoDto>> buscarPedidosPorIdCliente(@PathVariable String idCliente) {
         List<PedidoDto> pedidos = PedidoMapper.toListPedidoDto(pedidoService.buscarPedidosPorIdCliente(idCliente));
         return ResponseEntity.ok(pedidos);
     }
 
     @PostMapping
-    public ResponseEntity<PedidoDto> createOrder(@RequestParam String idCliente, @RequestBody List<ItemPedidoDto> items) {
+    public ResponseEntity<PedidoDto> criarPedido(@RequestParam String idCliente, @RequestBody List<ItemPedidoDto> items) {
         items.forEach(itemPedidoValidator::validate);
         List<ItemPedido> entities = ItemPedidoMapper.toListItemPedidoEntity(items);
-        Pedido pedido = pedidoService.criarPedido(idCliente, entities);
-        return ResponseEntity.status(HttpStatus.CREATED).body(PedidoMapper.toPedidoDto(pedido));
+        Pedido pedidoCriado = pedidoService.criarPedido(idCliente, entities);
+        PedidoDto novoPedido = PedidoMapper.toPedidoDto(pedidoCriado);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(novoPedido);
     }
 
     @PostMapping("/{idPedido}/items")
-    public ResponseEntity<Void> addItemToOrder(@PathVariable String idPedido, @RequestBody ItemPedidoDto item) {
+    public ResponseEntity<Void> incluirItemAoPedido(@PathVariable String idPedido, @RequestBody ItemPedidoDto item) {
 
         itemPedidoValidator.validate(item);
         ItemPedido itemEntity = ItemPedidoMapper.toItemPedidoEntity(item);
@@ -90,13 +94,13 @@ public class PedidoController {
     }
 
     @DeleteMapping("/{idPedido}/items/{idItemPedido}")
-    public ResponseEntity<Void> removeItemFromOrder(@PathVariable String idPedido, @PathVariable String idItemPedido) {
+    public ResponseEntity<Void> removerItemDoPedido(@PathVariable String idPedido, @PathVariable String idItemPedido) {
         pedidoService.removerItemDoPedido(idPedido, idItemPedido);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{idPedido}/items")
-    public ResponseEntity<Void> updateItemPedido(@PathVariable String idPedido, @RequestBody ItemPedidoDto item) {
+    public ResponseEntity<Void> alterarItemDoPedido(@PathVariable String idPedido, @RequestBody ItemPedidoDto item) {
         itemPedidoValidator.validate(item);
         ItemPedido itemEntity = ItemPedidoMapper.toItemPedidoEntity(item);
         pedidoService.alterarItemPedido(idPedido, itemEntity);
@@ -104,27 +108,28 @@ public class PedidoController {
     }
 
     @GetMapping("/{idPedido}/total")
-    public ResponseEntity<BigDecimal> calculateOrderTotal(@PathVariable String idPedido) {
+    public ResponseEntity<BigDecimal> calcularTotalDoPedido(@PathVariable String idPedido) {
         return ResponseEntity.ok(pedidoService.calcularValorTotalPedido(idPedido));
     }
 
     @PostMapping("/{idPedido}/finalizar")
-    public ResponseEntity<Void> finalizeOrder(@PathVariable String idPedido) {
+    public ResponseEntity<Void> finalizarPedido(@PathVariable String idPedido) {
         pedidoService.finalizarPedido(idPedido);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{idPedido}/cancelar")
-    public ResponseEntity<Void> cancelOrder(@PathVariable String idPedido) {
+    public ResponseEntity<Void> cancelarPedido(@PathVariable String idPedido) {
         pedidoService.cancelarPedido(idPedido);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{idPedido}/validar")
     public ResponseEntity<Map<String, Boolean>> validarPedido(@PathVariable String idPedido) {
-        Optional<Pedido> pedido = pedidoService.buscarPedidoPorId(idPedido)
-                .map(pedidoValidator::validate);
-        return (pedido.isPresent() && Status.PENDENTE.equals(pedido.get().getStatus()))
+        Optional<PedidoDto> pedido = pedidoService.buscarPedidoPorId(idPedido)
+                        .map(PedidoMapper::toPedidoDto)
+                        .map(pedidoValidator::validate);
+        return (pedido.isPresent() && Status.PENDENTE.toString().compareTo(pedido.get().getStatus())==0)
                             ?ResponseEntity.ok(Map.of(idPedido, true))
                             :ResponseEntity.ok(Map.of(idPedido, false));
     }

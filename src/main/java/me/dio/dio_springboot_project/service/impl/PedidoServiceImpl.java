@@ -2,9 +2,14 @@ package me.dio.dio_springboot_project.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
+import java.util.IntSummaryStatistics;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -192,12 +197,19 @@ public class PedidoServiceImpl implements PedidoService {
         Pedido pedidoAlterado = buscarPedidoPorId(idPedido)
             .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado com o id: " + idPedido));
 
-        pedidoAlterado.getItemsPedido().forEach(item -> {
-            // Associa o item ao pedido
-            Produto produtoAlterado = item.getProduto();
-            produtoAlterado.setEstoque(produtoAlterado.getEstoque() - item.getQuantidade());
-            produtoRepository.save(produtoAlterado);
+        Map<String, Integer> stats = getQuantidadeVendida(pedidoAlterado.getItemsPedido());
+
+        //Atualiza estoque dos produtos vendidos no pedido
+        List<Produto> listaProdutos = new ArrayList<>();
+        stats.entrySet().forEach(produto -> {
+            Optional<Produto> opt = produtoRepository.findById(produto.getKey());
+            if (opt.isPresent()){
+                Produto changedProd = opt.get();
+                changedProd.setEstoque(changedProd.getEstoque()-produto.getValue());
+                listaProdutos.add(changedProd);
+            }
         });
+        produtoRepository.saveAll(listaProdutos);
 
         // Atualiza o valor total do pedido
         pedidoAlterado.setValorTotalPedido(pedidoAlterado.calcularTotalPedido());
@@ -221,5 +233,15 @@ public class PedidoServiceImpl implements PedidoService {
 
     private boolean validarNumeroPedido(String pedidoNumber) {
         return pedidoNumber != null && !pedidoNumber.isEmpty() && pedidoNumber.matches("ORD-[0-9]{1,2}[0-9]{4}");
+    }
+
+    public static Map<String, Integer> getQuantidadeVendida(List<ItemPedido> items) {
+        Map<String, Integer> statistics = 
+            items.stream().collect(Collectors.groupingBy(
+                item -> item.getProduto().getId(),
+                Collectors.summingInt(item -> item.getQuantidade())
+            ));
+
+        return statistics;
     }
 }

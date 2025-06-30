@@ -1,4 +1,4 @@
-package me.dio.dio_springboot_project.integration.base;
+package me.dio.dio_springboot_project.base;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;

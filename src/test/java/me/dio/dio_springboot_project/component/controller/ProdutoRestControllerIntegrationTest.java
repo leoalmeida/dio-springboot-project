@@ -1,7 +1,6 @@
 package me.dio.dio_springboot_project.component.controller;
 
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;

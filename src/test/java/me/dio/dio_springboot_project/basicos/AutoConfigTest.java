@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
+import me.dio.dio_springboot_project.DioSpringbootProjectApplication;
 import me.dio.dio_springboot_project.domain.model.Cliente;
 import me.dio.dio_springboot_project.domain.model.ItemPedido;
 import me.dio.dio_springboot_project.domain.model.Pedido;
@@ -16,6 +18,7 @@ import me.dio.dio_springboot_project.domain.model.Usuario;
 
 
 @DataMongoTest
+@ContextConfiguration(classes = DioSpringbootProjectApplication.class)
 @ActiveProfiles("test")
 public class AutoConfigTest {
   @Test

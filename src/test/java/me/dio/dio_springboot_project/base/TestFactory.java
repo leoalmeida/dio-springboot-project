@@ -1,6 +1,8 @@
-package me.dio.dio_springboot_project.integration.base;
+package me.dio.dio_springboot_project.base;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -41,35 +43,31 @@ public class TestFactory {
                 .build();
     }
     
-    public PedidoDto gerarPedidoDto() {
-        return PedidoMapper.toPedidoDto(gerarPedido());
+    public PedidoDto gerarPedidoDto(Cliente cliente) {
+        return PedidoMapper.toPedidoDto(gerarPedido(cliente));
     }
 
-    public PedidoDto gerarPedidoDto(Cliente cliente, ItemPedido itemPedido) {
-        return PedidoMapper.toPedidoDto(gerarPedido(cliente,itemPedido));
-    }
-
-    public Pedido gerarPedido() {
-        return gerarPedido(null,null);
-    }
-
-    public Pedido gerarPedido(Cliente cliente, ItemPedido itemPedido) {
-        Cliente regCliente = (null==cliente)?gerarCliente(null,null):cliente;
-        ItemPedido regItemPedido = (null==itemPedido)?gerarItemPedido():itemPedido;
+    public Pedido gerarPedido(Cliente cliente) {        
+        if (null==cliente) throw new IllegalArgumentException("Cliente não pode ser nulo");
         Pedido pedido = Pedido.builder()
                 .id(UUID.randomUUID().toString())
                 .numeroPedido(gerarNumeroPedido())
                 .dataPedido(LocalDateTime.now())
                 .valorTotalPedido(BigDecimal.ZERO)
-                .cliente(regCliente)
+                .cliente(cliente)
                 .build();
-        pedido.incluirItemPedido(regItemPedido);
         pedido.atualizaValorTotalPedido();
         return pedido;
     }
 
     public ItemPedidoDto gerarItemPedidoDto() {
-        return gerarItemPedidoDto(null,null);
+        return ItemPedidoMapper.toItemPedidoDto(gerarItemPedido());
+    }
+
+    public ItemPedidoDto gerarItemPedidoDto(Cliente cliente) {
+        Pedido pedido = gerarPedido(cliente);
+        Produto produto = gerarProduto();
+        return gerarItemPedidoDto(pedido,produto);
     }
 
     public ItemPedidoDto gerarItemPedidoDto(Pedido pedido, Produto produto) {
@@ -77,19 +75,31 @@ public class TestFactory {
     }
 
     public ItemPedido gerarItemPedido() {
-        return gerarItemPedido(null,null);
-    }
-
-    public ItemPedido gerarItemPedido(Pedido pedido, Produto produto) {
-        Produto regProduto = (null==produto)?gerarProduto():produto;
-        Pedido regPedido = (null==pedido)?gerarPedido():pedido;
+        Produto regProduto = gerarProduto();
         ItemPedido itemPedido = ItemPedido.builder()
                 .id(UUID.randomUUID().toString())
-                .pedido(regPedido)
                 .quantidade((int)(Math.random() * 10) + 1)
                 .precoUnitario(regProduto.getPreco())
                 .produto(regProduto)
                 .build();
+
+        itemPedido.updateSubtotal();
+        return itemPedido;
+    }
+
+    public ItemPedido gerarItemPedido(Pedido pedido, Produto produto) {
+        if (null==pedido) throw new IllegalArgumentException("Pedido não pode ser nulo");
+        Produto regProduto = (null==produto)?gerarProduto():produto;
+        ItemPedido itemPedido = ItemPedido.builder()
+                .id(UUID.randomUUID().toString())
+                .quantidade((int)(Math.random() * 10) + 1)
+                .precoUnitario(regProduto.getPreco())
+                .produto(regProduto)
+                .build();
+        
+        pedido.incluirItemPedido(itemPedido);
+        pedido.atualizaValorTotalPedido();
+    
         itemPedido.updateSubtotal();
         return itemPedido;
     }
@@ -107,7 +117,6 @@ public class TestFactory {
                 .email(email)
                 .telefone((null==telefone||telefone.isBlank())?"(11) 99999-1111":telefone)
                 .build();
-        cliente1.incluirPedido(gerarPedido());
         return cliente1;
     }
 
@@ -121,7 +130,7 @@ public class TestFactory {
                 .id(UUID.randomUUID().toString())
                 .nome("Produto "+regProduto)
                 .descricao("Descrição do Produto " + regProduto)
-                .preco(new BigDecimal(Math.random()*100))
+                .preco(new BigDecimal(Math.random()*100).round(new MathContext(2, RoundingMode.FLOOR)))
                 .estoque((int)(Math.random() * 1000) + 1)
                 .sku(String.format("SKU%03d",regProduto))
                 .build();

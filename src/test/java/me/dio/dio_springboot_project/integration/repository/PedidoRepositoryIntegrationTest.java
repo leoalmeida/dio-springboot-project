@@ -17,12 +17,12 @@ import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import me.dio.dio_springboot_project.base.TestFactory;
 import me.dio.dio_springboot_project.domain.model.Cliente;
 import me.dio.dio_springboot_project.domain.model.ItemPedido;
 import me.dio.dio_springboot_project.domain.model.Pedido;
 import me.dio.dio_springboot_project.domain.model.Produto;
 import me.dio.dio_springboot_project.domain.repository.PedidoRepository;
-import me.dio.dio_springboot_project.integration.base.TestFactory;
 
 
 //@ExtendWith(SpringExtension.class)
@@ -45,10 +45,11 @@ public class PedidoRepositoryIntegrationTest extends TestFactory{
     @BeforeEach
     public void setUp() {
         
+        Cliente cliente = gerarCliente(null, null);
         // Criar pedidos
-        pedido1 = gerarPedido();
-        pedido2 = gerarPedido();
-        pedido3 = gerarPedido();
+        pedido1 = gerarPedido(cliente);
+        pedido2 = gerarPedido(cliente);
+        pedido3 = gerarPedido(cliente);
 
         mongoTemplate.insertAll(Arrays.asList(pedido1,pedido2,pedido3));
     }

@@ -29,12 +29,12 @@ public class UsuarioMapper {
 		if (usuarioDto == null)
 			return null;
 		
-		Usuario usuarioEntity = new Usuario();
-		
-        usuarioEntity.setId(usuarioDto.getId());
-        usuarioEntity.setEmail(usuarioDto.getEmail());
-        usuarioEntity.setLogin(usuarioDto.getLogin());
-        usuarioEntity.setPassword(usuarioDto.getPassword());
+		Usuario usuarioEntity = Usuario.builder()
+				.id(usuarioDto.getId())
+				.email(usuarioDto.getEmail())
+				.login(usuarioDto.getLogin())
+				.password(usuarioDto.getPassword())
+				.build();
 
 		return usuarioEntity;
 	}

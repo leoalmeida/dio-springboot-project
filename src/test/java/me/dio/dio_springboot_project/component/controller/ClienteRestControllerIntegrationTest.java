@@ -23,6 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import me.dio.dio_springboot_project.base.TestFactory;
 import me.dio.dio_springboot_project.dto.ClienteDto;
 import me.dio.dio_springboot_project.dto.mapper.ClienteMapper;
 import me.dio.dio_springboot_project.service.ClienteService;
@@ -31,7 +32,7 @@ import me.dio.dio_springboot_project.service.ClienteService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class ClienteRestControllerIntegrationTest {
+public class ClienteRestControllerIntegrationTest extends TestFactory {
 
     @Autowired
     private MockMvc mvc;
@@ -43,9 +44,9 @@ public class ClienteRestControllerIntegrationTest {
     public void testeCliente_quandoConsultarClientes_thenStatus200()
       throws Exception {
 
-        ClienteDto joao = ClienteDto.builder().nome("João Silva").build();
-        ClienteDto maria = ClienteDto.builder().nome("Maria Santos").build();
-        ClienteDto pedro = ClienteDto.builder().nome("Pedro Oliveira").build();
+        ClienteDto joao = gerarClienteDto("João Silva","(11) 99999-0000");
+        ClienteDto maria = gerarClienteDto("Maria Santos","(21) 99999-2222");
+        ClienteDto pedro = gerarClienteDto("Pedro Oliveira","(31) 99999-3333");
         List<ClienteDto> todosClientes = Arrays.asList(joao,maria,pedro);
 
         when(service.buscarTodosClientes()).thenReturn(ClienteMapper.toListClienteEntity(todosClientes));

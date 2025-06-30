@@ -79,7 +79,7 @@ public class ClienteController {
         clienteValidator.validate(cliente);
         ClienteDto novoCliente = ClienteMapper.toClienteDto(
                         clienteService.criarCliente(ClienteMapper.toClienteEntity(cliente)));
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoCliente);
+        return ResponseEntity.status(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(novoCliente);
     }
 
     @PutMapping("/{id}")

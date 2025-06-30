@@ -2,7 +2,7 @@ package me.dio.dio_springboot_project.unit.controller;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.UUID;
+import java.util.List;
 
 
 import static org.hamcrest.Matchers.is;
@@ -15,21 +15,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import me.dio.dio_springboot_project.base.TestFactory;
 import me.dio.dio_springboot_project.controller.ClienteController;
+import me.dio.dio_springboot_project.core.util.ObjectsValidator;
 import me.dio.dio_springboot_project.domain.model.Cliente;
 import me.dio.dio_springboot_project.domain.model.Pedido;
 import me.dio.dio_springboot_project.dto.ClienteDto;
@@ -37,23 +36,24 @@ import me.dio.dio_springboot_project.dto.mapper.ClienteMapper;
 import me.dio.dio_springboot_project.service.ClienteService;
 
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
+//@ExtendWith(SpringExtension.class)
+//@SpringBootTest
 @WebMvcTest(ClienteController.class) 
-@ActiveProfiles("test")
-public class ClienteControllerTest {
+public class ClienteControllerTest extends TestFactory{
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private ObjectsValidator<ClienteDto> clienteValidator;
 
     @MockitoBean
     private ClienteService clienteService;
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    private Cliente cliente1;
-    private Cliente cliente2;
-    private Cliente cliente3;
+    List<Cliente> clientesAssets = new ArrayList<>();
+    List<Cliente> clientesComPedido = new ArrayList<>();
     private Pedido pedido;
 
     @BeforeEach
@@ -61,100 +61,190 @@ public class ClienteControllerTest {
         
         // Cria clientes para testes
         // Prepara Mock cliente1
-        cliente1 = new Cliente();
-        cliente1.setId(UUID.randomUUID().toString());
-        cliente1.setNome("João Silva");
-        cliente1.setEmail("joao.silva@example.com");
-        cliente1.setTelefone("(11) 99999-1111");
+        Cliente cliente1 = gerarCliente("João Silva","(11) 99999-1111");
                             
         // Prepara Mock cliente2
-        cliente2 = new Cliente();
-        cliente2.setId(UUID.randomUUID().toString());
-        cliente2.setNome("Maria Santos");
-        cliente2.setEmail("maria.santos@example.com");
-        cliente2.setTelefone("(11) 99999-2222");
-        
-        pedido = new Pedido();
-        pedido.setId(UUID.randomUUID().toString());
-        pedido.setNumeroPedido("ORD-150001");
+        Cliente cliente2 = gerarCliente("Maria Santos","(11) 99999-2222");
+        pedido = gerarPedido(cliente2);
         cliente2.incluirPedido(pedido);
 
         // Prepara Mock cliente3
-        cliente3 = new Cliente();
-        cliente3.setId(UUID.randomUUID().toString());
-        cliente3.setNome("Pedro Oliveira");
-        cliente3.setEmail("pedro.oliveira@example.com");
-        cliente3.setTelefone("(11) 99999-3333");
+        Cliente cliente3 = gerarCliente("Pedro Oliveira","(11) 99999-3333");
+
+        clientesAssets.add(cliente1);
+        clientesAssets.add(cliente2);
+        clientesAssets.add(cliente3);
+        clientesComPedido.add(cliente2);
     }
 
     @Test
     public void deveRetornarNovoClienteCriado() throws Exception {
         
         // Cria clientes para testes
-        ClienteDto novoCliente = ClienteDto.builder()
-                .nome("Cliente Novo")
-                .email("teste@teste.com")
-                .telefone("3399999999")
-                .pedidos(new ArrayList<>())
-                .build();
+        Cliente novoCliente = gerarCliente("Cliente Novo","(33) 9999-9999");
 
-        Cliente entity = ClienteMapper.toClienteEntity(novoCliente);
-        entity.setId(UUID.randomUUID().toString());
+        ClienteDto dto = ClienteMapper.toClienteDto(novoCliente);
+
         // Configura o mock
-        doReturn(entity).when(clienteService).criarCliente(entity);
+        doReturn(novoCliente).when(clienteService).criarCliente(novoCliente);
 
         // Executa e verifica
         mockMvc.perform(post("/api/clientes")
-                            .content(mapper.writeValueAsString(novoCliente))
+                            .content(mapper.writeValueAsString(dto))
                             .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$.id", is(entity.getId())))
-                .andExpect(jsonPath("$.nome", is(entity.getNome())));
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("id").value(is(novoCliente.getId())))
+                .andExpect(jsonPath("nome").value(is(novoCliente.getNome())));
 
         // Verifica se o método do serviço foi chamado
-        verify(clienteService, times(1)).criarCliente(entity);
+        verify(clienteService, times(1)).criarCliente(novoCliente);
     }
 
     @Test
     public void deveRetornarTodosClientes() throws Exception {
         // Configura o mock
-        doReturn(Arrays.asList(cliente1, cliente2, cliente3))
+        doReturn(clientesAssets)
             .when(clienteService).buscarTodosClientes();
 
         // Executa e verifica
         mockMvc.perform(get("/api/clientes"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[0].id", is(1)))
-                .andExpect(jsonPath("$[0].nome", is("Cliente 1")))
-                .andExpect(jsonPath("$[1].id", is(2)))
-                .andExpect(jsonPath("$[1].nome", is("Cliente 2")))
-                .andExpect(jsonPath("$[2].id", is(3)))
-                .andExpect(jsonPath("$[2].nome", is("Cliente 3")));
+                .andExpect(jsonPath("$[0].id", is(clientesAssets.get(0).getId())))
+                .andExpect(jsonPath("$[0].nome", is(clientesAssets.get(0).getNome())))
+                .andExpect(jsonPath("$[1].id", is(clientesAssets.get(1).getId())))
+                .andExpect(jsonPath("$[1].nome", is(clientesAssets.get(1).getNome())))
+                .andExpect(jsonPath("$[2].id", is(clientesAssets.get(2).getId())))
+                .andExpect(jsonPath("$[2].nome", is(clientesAssets.get(2).getNome())));
 
         // Verifica se o método do serviço foi chamado
         verify(clienteService, times(1)).buscarTodosClientes();
     }
 
     @Test
-    public void deveRetornarClientesComEstoqueBaixo() throws Exception {
+    public void deveRetornarClientesComPedido() throws Exception {
         // Configura o mock
-        doReturn(Arrays.asList(cliente2))
+        doReturn(clientesComPedido)
             .when(clienteService).buscarClientesComPedidos();
 
         // Executa e verifica
         mockMvc.perform(get("/api/clientes/com-pedidos"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is(2)))
-                .andExpect(jsonPath("$[0].nome", is("Cliente 2")));
+                .andExpect(jsonPath("$[0].id", is(clientesComPedido.get(0).getId())))
+                .andExpect(jsonPath("$[0].nome", is(clientesComPedido.get(0).getNome())));
 
         // Verifica se o método do serviço foi chamado
         verify(clienteService, times(1)).buscarClientesComPedidos();
     }
+
+//    @Test
+//    public void deveRetornarUmClienteAPartirDoIdCliente() throws Exception {}
+//		// Configura o mock
+//        doReturn(cliente1)
+//            .when(clienteService)
+//            .buscarProdutos();
+//		// Executa e verifica
+//        mockMvc.perform(get("/api/clientes/{id}",cliente1.getId()))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+//                .andExpect(jsonPath("$", hasSize(1)))
+//                .andExpect(jsonPath("$.id", is(1)))
+//                .andExpect(jsonPath("$.nome", is("Produto 1")));
+//
+//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+//        verify(clienteService, times(1)).buscarProdutos();
+//	  }
+//    @Test
+//    public void deveRetornarUmClienteAPartirDoEmailCliente() throws Exception {}
+//		// Configura o mock
+//        doReturn(cliente1)
+//            .when(clienteService)
+//            .buscarProdutos();
+//		// Executa e verifica
+//        mockMvc.perform(get("/api/clientes/email/{email}",cliente1.getEmail()))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+//                .andExpect(jsonPath("$", hasSize(1)))
+//                .andExpect(jsonPath("$.id", is(1)))
+//                .andExpect(jsonPath("$.nome", is("Produto 1")));
+//
+//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+//        verify(clienteService, times(1)).buscarProdutos();
+//	  }
+//    @Test
+//    public void devePesquisarClientesAPartirDoNomeCliente() throws Exception {}
+//		// Configura o mock
+//        doReturn(cliente1)
+//            .when(clienteService)
+//            .buscarProdutos();
+//		// Executa e verifica
+//        mockMvc.perform(get("/api/clientes/pesquisar"))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+//                .andExpect(jsonPath("$", hasSize(1)))
+//                .andExpect(jsonPath("$.id", is(1)))
+//                .andExpect(jsonPath("$.nome", is("Produto 1")));
+//
+//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+//        verify(clienteService, times(1)).buscarProdutos();
+//	  }
+//    @Test
+//    public void deveAlterarClienteAPartirDoIdCliente() throws Exception {}
+//    	// Configura o mock
+//        doReturn(cliente1)
+//            .when(clienteService)
+//            .buscarProdutos();
+//		// Executa e verifica
+//        mockMvc.perform(put("/api/clientes/{id}",cliente1.getId()))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+//                .andExpect(jsonPath("$", hasSize(1)))
+//                .andExpect(jsonPath("$.id", is(1)))
+//                .andExpect(jsonPath("$.nome", is("Produto 1")));
+//
+//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+//        verify(clienteService, times(1)).buscarProdutos();
+//	  }
+//    @Test
+//    public void deveRemoverClienteAPartirDoIdCliente() throws Exception {}
+//    	// Configura o mock
+//        doReturn(cliente1)
+//            .when(clienteService)
+//            .buscarProdutos();
+//		// Executa e verifica
+//        mockMvc.perform(delete("/api/clientes/{id}",cliente1.getId()))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+//                .andExpect(jsonPath("$", hasSize(1)))
+//                .andExpect(jsonPath("$.id", is(1)))
+//                .andExpect(jsonPath("$.nome", is("Produto 1")));
+//
+//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+//        verify(clienteService, times(1)).buscarProdutos();
+//	  }
+//    @Test
+//    public void deveValidarSeUmEmailPossuiFormatoValido() throws Exception {}
+//		// Configura o mock
+//        doReturn(cliente1)
+//            .when(clienteService)
+//            .buscarProdutos();
+//		// Executa e verifica
+//        mockMvc.perform(post("/api/clientes/validar-email"))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+//                .andExpect(jsonPath("$", hasSize(1)))
+//                .andExpect(jsonPath("$.id", is(1)))
+//                .andExpect(jsonPath("$.nome", is("Produto 1")));
+//
+//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+//        verify(clienteService, times(1)).buscarProdutos();
+//	}
 
 }

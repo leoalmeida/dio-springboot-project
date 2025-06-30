@@ -1,4 +1,4 @@
-package me.dio.dio_springboot_project.component.service;
+package me.dio.dio_springboot_project.integration.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import me.dio.dio_springboot_project.base.TestFactory;
 import me.dio.dio_springboot_project.core.util.ObjectsValidator;
 import me.dio.dio_springboot_project.domain.model.Cliente;
 import me.dio.dio_springboot_project.domain.model.ItemPedido;
@@ -37,7 +39,7 @@ import me.dio.dio_springboot_project.service.impl.ProdutoServiceImpl;
 
 @DataMongoTest
 @ActiveProfiles("test")
-public class PedidoServiceImplIntegrationTest {
+public class PedidoServiceImplIntegrationTest extends TestFactory{
 
     @TestConfiguration
     static class PedidoServiceImplTestContextConfiguration {
@@ -73,6 +75,7 @@ public class PedidoServiceImplIntegrationTest {
     Pedido pedido;
     Produto produto;
     ItemPedido itemPedido;
+    ItemPedido itemPedido2;
 
     @BeforeEach
     public void setUp() {
@@ -81,46 +84,25 @@ public class PedidoServiceImplIntegrationTest {
         mongoTemplate.dropCollection(Pedido.class);
         mongoTemplate.dropCollection(ItemPedido.class);
         // Cria cliente para testes
-        cliente = new Cliente();
-        cliente.setId(UUID.randomUUID().toString());
-        cliente.setNome("João Silva");
-        cliente.setEmail("joao.silva@example.com");
-        cliente.setTelefone("(11) 99999-1111");
-        cliente.setPedidos(new ArrayList<>());
+        cliente = gerarCliente("João Silva","(11) 99999-1111");
         
         // Cria produto para testes
-        produto = new Produto();
-        produto.setId(UUID.randomUUID().toString());
-        produto.setNome("Produto 1");
-        produto.setDescricao("Descrição do Produto 1");
-        produto.setPreco(new BigDecimal("10.00"));
-        produto.setEstoque(100);
-        produto.setSku("SKU001");
+        produto = gerarProduto();
         
         // Cria pedido para testes
-        pedido = new Pedido();
-        pedido.setId(UUID.randomUUID().toString());
-        pedido.setNumeroPedido("ORD-150001");
-        pedido.setDataPedido(LocalDateTime.now());
-        pedido.setCliente(cliente);
-        pedido.setItemsPedido(new ArrayList<>());
-        pedido.setValorTotalPedido(BigDecimal.ZERO);
-
-
-        // Cria item de pedido para testes
-        itemPedido = new ItemPedido();
-        itemPedido.setId(UUID.randomUUID().toString());
-        itemPedido.setProduto(produto);
-        itemPedido.setQuantidade(2);
-        itemPedido.setPrecoUnitario(new BigDecimal("10.00"));
-        itemPedido.setSubtotal(new BigDecimal("20.00"));
+        pedido = gerarPedido(cliente);
         
-        pedido.incluirItemPedido(itemPedido); // Adiciona item ao pedido do cliente
+        
+        // Cria item de pedido para testes
+        itemPedido = gerarItemPedido(pedido,produto);
+        itemPedido2 = gerarItemPedido(pedido,produto);
+        
         cliente.incluirPedido(pedido);// Adiciona pedido à lista do cliente
         
         mongoTemplate.save(cliente);
         mongoTemplate.save(pedido);
         mongoTemplate.save(itemPedido);
+        mongoTemplate.save(itemPedido2);
         mongoTemplate.save(produto);
     }
 
@@ -137,10 +119,7 @@ public class PedidoServiceImplIntegrationTest {
         // Cria lista de itens para o pedido
         List<ItemPedido> items = new ArrayList<>();
 
-        ItemPedido newItem = new ItemPedido();
-        newItem.setProduto(produto);
-        newItem.setQuantidade(3);
-        newItem.setPrecoUnitario(new BigDecimal("10.00"));
+        ItemPedido newItem = gerarItemPedido();
         items.add(newItem);
 
         // Executa o método
@@ -166,18 +145,18 @@ public class PedidoServiceImplIntegrationTest {
         assertTrue(foundPedido.isPresent(), "Pedido deveria ser encontrado");
         assertEquals(pedido.getId(), foundPedido.get().getId(),
                 "Pedido encontrado deveria ter o ID correto" );
-        assertEquals("ORD-150001", foundPedido.get().getNumeroPedido(),
+        assertEquals(pedido.getNumeroPedido(), foundPedido.get().getNumeroPedido(),
                     "Pedido encontrado deveria ter o número correto");
     }
 
     @Test
     public void testFindPedidoByNumber() {
         // Executa o método
-        Optional<Pedido> foundPedido = pedidoService.buscarPedidoPorNumero("ORD-150001");
+        Optional<Pedido> foundPedido = pedidoService.buscarPedidoPorNumero(pedido.getNumeroPedido());
 
         // Verifica o resultado
         assertTrue(foundPedido.isPresent(),"Pedido deveria ser encontrado");
-        assertEquals("ORD-150001", foundPedido.get().getNumeroPedido(),
+        assertEquals(pedido.getNumeroPedido(), foundPedido.get().getNumeroPedido(),
                     "Pedido encontrado deveria ter o número correto");
     }
 
@@ -188,7 +167,7 @@ public class PedidoServiceImplIntegrationTest {
 
         // Verifica o resultado
         assertEquals(1, pedidos.size(),"Deveria encontrar 1 pedido");
-        assertEquals("ORD-150001", pedidos.get(0).getNumeroPedido(),
+        assertEquals(pedido.getNumeroPedido(), pedidos.get(0).getNumeroPedido(),
                     "Pedido encontrado deveria ter o número correto");
     }
 
@@ -199,16 +178,13 @@ public class PedidoServiceImplIntegrationTest {
 
         // Verifica o resultado
         assertEquals(1, pedidos.size(),"Deveria encontrar 1 pedido");
-        assertEquals( "ORD-150001", pedidos.get(0).getNumeroPedido(), "Pedido encontrado deveria ter o número correto");
+        assertEquals( pedido.getNumeroPedido(), pedidos.get(0).getNumeroPedido(), "Pedido encontrado deveria ter o número correto");
     }
 
     @Test
     public void testAddItemToPedido() {
         // Cria um novo item para adicionar
-        ItemPedido newItem = new ItemPedido();
-        newItem.setProduto(produto);
-        newItem.setQuantidade(1);
-        newItem.setPrecoUnitario(new BigDecimal("10.00"));
+        ItemPedido newItem = gerarItemPedido();
 
         // Executa o método
         pedidoService.incluirItemAoPedido(pedido.getId(), newItem);
@@ -216,7 +192,7 @@ public class PedidoServiceImplIntegrationTest {
         // Verifica se o item foi adicionado ao pedido
         Optional<Pedido> pedidoAtualizado = pedidoService.buscarPedidoPorId(pedido.getId());
         assertTrue(pedidoAtualizado.isPresent(), "Pedido deveria ser encontrado");
-        assertEquals(2, pedidoAtualizado.get().getItemsPedido().size(), "Pedido deveria ter 2 itens");
+        assertEquals(pedido.getItemsPedido().size()+1, pedidoAtualizado.get().getItemsPedido().size(), "Pedido deveria ter 2 itens");
     }
 
     @Test
@@ -227,7 +203,7 @@ public class PedidoServiceImplIntegrationTest {
         // Verifica se o item foi removido do pedido
         Optional<Pedido> pedidoAtualizado = pedidoService.buscarPedidoPorId(pedido.getId());
         assertTrue(pedidoAtualizado.isPresent(), "Pedido deveria ser encontrado");
-        assertEquals(0,pedidoAtualizado.get().getItemsPedido().size(),"Pedido não deveria ter itens");
+        assertEquals(pedido.getItemsPedido().size()-1,pedidoAtualizado.get().getItemsPedido().size(),"Pedido não deveria ter itens");
     }
 
     @Test
@@ -246,7 +222,7 @@ public class PedidoServiceImplIntegrationTest {
         Optional<Pedido> pedidoAtualizado = pedidoService.buscarPedidoPorId(itemPedidoAutualizado.getPedido().getId());
         assertTrue(pedidoAtualizado.isPresent(), "Pedido deveria ser encontrado");
         assertEquals(pedido.getId(), pedidoAtualizado.get().getId(),"Item deveria ter o mesmo ID");
-        assertEquals(pedido.getItemsPedido().size(), pedidoAtualizado.get().getItemsPedido().size(),"Item deveria ter o mesmo ID");
+        assertEquals(pedido.getItemsPedido().size(), pedidoAtualizado.get().getItemsPedido().size(),"Pedido deveria ter a mesma quantidade de items.");
 
         assertEquals(5, (int) pedidoAtualizado.get().getItemsPedido().get(0).getQuantidade(),"Item deveria ter a quantidade atualizada");
         assertEquals(new BigDecimal("12.00"), pedidoAtualizado.get().getItemsPedido().get(0).getPrecoUnitario(),"Item deveria ter o preço unitário atualizado");
@@ -258,23 +234,31 @@ public class PedidoServiceImplIntegrationTest {
         BigDecimal total = pedidoService.calcularValorTotalPedido(pedido.getId());
 
         // Verifica o resultado
-        assertEquals(new BigDecimal("20.00"), total,"Valor total deveria ser 20.00");
+        assertEquals(pedido.getValorTotalPedido(), total,"Valor total deveria estar correto");
     }
 
     @Test
     public void testFinalizePedido() {
+ 
+        Integer totalBaixadoEstoque = pedido.getItemsPedido()
+                    .stream()
+                    .mapToInt(ItemPedido::getQuantidade)
+                    .sum();
+
+        produto.setEstoque(produto.getEstoque()-totalBaixadoEstoque);
+
         // Executa o método
         pedidoService.finalizarPedido(pedido.getId());
 
         // Verifica se o pedido foi finalizado
         Optional<Pedido> finalizedPedido = pedidoService.buscarPedidoPorId(pedido.getId());
         assertTrue(finalizedPedido.isPresent(),"Pedido deveria ser encontrado");
-        assertEquals( new BigDecimal("20.00"), finalizedPedido.get().getValorTotalPedido(),"Valor total do pedido deveria ser 20.00");
+        assertEquals( pedido.getValorTotalPedido(), finalizedPedido.get().getValorTotalPedido(),"Valor total do pedido deveria estar correto");
 
         // Verifica se o estoque do produto foi atualizado
         Optional<Produto> produtoAtualizado = produtoService.buscarProdutoPorId(produto.getId());
         assertTrue(produtoAtualizado.isPresent(), "Produto deveria ser encontrado");
-        assertEquals(98, produtoAtualizado.get().getEstoque().intValue(),
+        assertEquals(produto.getEstoque(), produtoAtualizado.get().getEstoque().intValue(),
                         "Estoque do produto deveria ser atualizado");
     }
 
@@ -291,7 +275,7 @@ public class PedidoServiceImplIntegrationTest {
 
         Optional<Produto> produtoAtualizado = produtoService.buscarProdutoPorId(produto.getId());
         assertTrue(produtoAtualizado.isPresent(), "Produto deveria ser encontrado");
-        assertEquals(100, (int) produtoAtualizado.get().getEstoque(), 
+        assertEquals(produto.getEstoque(), (int) produtoAtualizado.get().getEstoque(), 
                     "Estoque do produto deveria ser restaurado");
     }
 

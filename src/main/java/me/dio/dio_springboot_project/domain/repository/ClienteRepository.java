@@ -14,6 +14,7 @@ import java.util.Optional;
  */
 public interface ClienteRepository extends MongoRepository<Cliente, String> {
 
+    @Query(" { 'email': ?0 }")
     Optional<Cliente> findByEmail(String email);
 
     @Query(" { 'nome': /?0/ }")

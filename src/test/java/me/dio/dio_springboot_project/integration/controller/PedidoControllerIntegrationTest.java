@@ -2,16 +2,23 @@ package me.dio.dio_springboot_project.integration.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import org.junit.jupiter.api.DisplayName;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import jakarta.annotation.PostConstruct;
+import me.dio.dio_springboot_project.base.AbstractIntegrationTest;
 import me.dio.dio_springboot_project.domain.model.Cliente;
 import me.dio.dio_springboot_project.domain.repository.PedidoRepository;
+import me.dio.dio_springboot_project.dto.ItemPedidoDto;
 import me.dio.dio_springboot_project.dto.PedidoDto;
-import me.dio.dio_springboot_project.integration.base.AbstractIntegrationTest;
 
 
 public class PedidoControllerIntegrationTest extends AbstractIntegrationTest{
@@ -19,34 +26,46 @@ public class PedidoControllerIntegrationTest extends AbstractIntegrationTest{
 
     @Autowired
     private PedidoRepository repository;
-    private Cliente cliente;
-    private PedidoDto pedidoDto;
+    
+    @Autowired 
+    private MongoTemplate mongoTemplate;
 
-    @PostConstruct
-    public void init() {
+    private Cliente cliente;
+    private ItemPedidoDto itemPedido;
+
+
+    @BeforeEach
+    public void setUp() {
         cliente = gerarCliente("Marta Rocha", "(51) 99999-5555");
-        pedidoDto = gerarPedidoDto(cliente, null);
+        itemPedido = gerarItemPedidoDto();
+        mongoTemplate.insertAll(Arrays.asList(cliente));
+    }
+
+    @AfterEach
+    void clean() {
+        mongoTemplate.remove(cliente);
     }
     
     @Test
-    @DisplayName("Pedido Path Test: salvar pedido dto e retornar")
     public void dadoPedidoDtoCorreto_entaoSalvaPedido_eRetornaPedidoDto()
       throws Exception {
-        UriComponentsBuilder
+        List<ItemPedidoDto> items = new ArrayList<>();
+        items.add(itemPedido);
+        String endpoint = UriComponentsBuilder
                     .fromUriString(PEDIDOS_API_ENDPOINT)
                     .queryParam("idCliente", cliente.getId())
                     .build()
-                    .toUri();
+                    .toUriString();
 
         // when
         PedidoDto savedPedidoDto = performPostRequestExpectedSuccess(
-                                    PEDIDOS_API_ENDPOINT, pedidoDto, PedidoDto.class);
+                                    endpoint, items, PedidoDto.class);
 
 
         //then
         assertNotNull(savedPedidoDto);
-        assertEquals(pedidoDto.getId(), savedPedidoDto.getId());
-        assertEquals(pedidoDto.getNumeroPedido(), savedPedidoDto.getNumeroPedido());
+        assertEquals(itemPedido.getId(), savedPedidoDto.getItemsPedido().get(0).getId());
+        assertEquals(itemPedido.getQuantidade(), savedPedidoDto.getItemsPedido().get(0).getQuantidade());
     }
     
 }

@@ -13,9 +13,9 @@ import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import me.dio.dio_springboot_project.base.TestFactory;
 import me.dio.dio_springboot_project.domain.model.Cliente;
 import me.dio.dio_springboot_project.domain.repository.ClienteRepository;
-import me.dio.dio_springboot_project.integration.base.TestFactory;
 
 //@ExtendWith(SpringExtension.class)
 @DataMongoTest

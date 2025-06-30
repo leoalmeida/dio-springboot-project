@@ -13,9 +13,9 @@ import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import me.dio.dio_springboot_project.base.TestFactory;
 import me.dio.dio_springboot_project.domain.model.Usuario;
 import me.dio.dio_springboot_project.domain.repository.UsuarioRepository;
-import me.dio.dio_springboot_project.integration.base.TestFactory;
 
 //@ExtendWith(SpringExtension.class)
 @DataMongoTest
@@ -57,7 +57,7 @@ public class UsuarioRepositoryIntegrationTest extends TestFactory{
         // then
         Optional<Usuario> retrievedUser = usuarioRepository.findById(usuario.getId());
         assertTrue(retrievedUser.isPresent());
-        assertEquals("user", retrievedUser.get().getLogin());
+        assertEquals("userName", retrievedUser.get().getLogin());
     }
 
 }

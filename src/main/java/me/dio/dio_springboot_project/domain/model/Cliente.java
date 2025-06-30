@@ -43,7 +43,6 @@ public class Cliente {
     private String nome;
 
     @Field(name = "email")
-    @Indexed(unique = true)
     private String email;
 
     @Field(name = "telefone")

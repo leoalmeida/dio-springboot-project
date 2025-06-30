@@ -15,12 +15,12 @@ public class UsuarioController {
     UsuarioService usuarioService;
 
     @PostMapping
-    public void post(@RequestBody UsuarioDto usuarioDto){
-        usuarioService.criarUsuario(usuarioDto);
+    public UsuarioDto post(@RequestBody UsuarioDto usuarioDto){
+        return usuarioService.criarUsuario(usuarioDto);
     }
     @PutMapping
-    public void put(@RequestBody UsuarioDto usuarioDto){
-        usuarioService.alterarUsuario(usuarioDto);
+    public UsuarioDto put(@RequestBody UsuarioDto usuarioDto){
+        return usuarioService.alterarUsuario(usuarioDto);
     }
     @GetMapping("{id}")
     public UsuarioDto getOne(@PathVariable("id") String id){

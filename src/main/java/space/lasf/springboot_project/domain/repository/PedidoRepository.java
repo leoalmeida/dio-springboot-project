@@ -17,5 +17,5 @@ public interface PedidoRepository extends MongoRepository<Pedido, String> {
     Optional<Pedido> findByNumeroPedido(String numeroPedido);
 
     @Query("{ 'cliente.id':  ?0 }")
-    List<Pedido> findOrdersByClienteId(String idCliente);
+    List<Pedido> findPedidosByIdCliente(String idCliente);
 }

@@ -17,7 +17,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import jakarta.validation.constraints.DecimalMin;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 /**
  * Entidade que representa um pedido.
@@ -42,7 +45,7 @@ public class Pedido {
     private LocalDateTime dataPedido;
 
     @DBRef
-    //@JsonBackReference
+    @JsonBackReference
     @JsonIgnoreProperties("pedidos")
     private Cliente cliente;
 
@@ -52,7 +55,7 @@ public class Pedido {
     @DBRef
     @Builder.Default
     @JsonIgnoreProperties("pedido")
-    //@JsonManagedReference
+    @JsonManagedReference
     private List<ItemPedido> itemsPedido = new ArrayList<>();
 
     @Field(name = "valor_total")

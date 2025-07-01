@@ -84,7 +84,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testSaveProduto() {
+    public void testeCriarProduto() {
         Produto mockUpdatedProduto = Produto.builder().id(produto1.getId()).build().updateData(produto1);
         // Configura o mock
         doReturn(mockUpdatedProduto).when(repository).save(mockUpdatedProduto);
@@ -105,7 +105,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testSaveProdutoWithNegativePreco() {
+    public void testeCriarProdutoComPrecoNegativo() {
         // Cria um produto com preço negativo
         Produto mockInvalidProduto = Produto.builder()
                         .nome("Produto Inválido")
@@ -133,7 +133,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testUpdateProduto() {
+    public void testeAlterarProduto() {
         Produto mockUpdatedProduto = Produto.builder().id(produto1.getId()).build().updateData(produto1);
         mockUpdatedProduto.setNome("ProdutoAlterado");
         // Configura o mock
@@ -157,7 +157,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindProdutoById() {
+    public void testeBuscarProdutoById() {
         // Configura o mock
         doReturn(Optional.of(produto1)).when(repository).findById(produto1.getId());
 
@@ -175,7 +175,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindProdutoBySku() {
+    public void testeBuscarProdutoBySku() {
         // Configura o mock
         doReturn(Optional.of(produto1)).when(repository).findBySku("SKU001");
 
@@ -193,7 +193,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindAllProdutos() {
+    public void testeBuscarAllProdutos() {
         // Configura o mock
         doReturn(Arrays.asList(produto1, produto2, produto3))
             .when(repository).findAll();
@@ -209,7 +209,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindProdutosPorFaixaDePreco() {
+    public void testeBuscarProdutosPorFaixaDePreco() {
         // Configura o mock
         doReturn(Arrays.asList(produto2, produto3))
             .when(repository).findByFaixaPreco(new BigDecimal("15.00"),new BigDecimal("25.00"));
@@ -227,7 +227,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindProdutosComPrecoMenorQueMaximo() {
+    public void testeBuscarProdutosComPrecoMenorQueMaximo() {
         // Configura o mock
         doReturn(Arrays.asList(produto2, produto3))
             .when(repository).findByPrecoLowerThan(new BigDecimal("25.00"));
@@ -245,7 +245,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindProdutosComPrecoMaiorQueMinimo() {
+    public void testeBuscarProdutosComPrecoMaiorQueMinimo() {
         // Configura o mock
         doReturn(Arrays.asList(produto2, produto3))
             .when(repository).findByPrecoGreaterThan(new BigDecimal("15.00"));
@@ -263,7 +263,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindProdutosByInvalidPrecoRange() {
+    public void testeBuscarProdutosByInvalidPrecoRange() {
         // Executa o método
         Throwable  throwable  = 
                 assertThrows(IllegalArgumentException.class, () ->{
@@ -279,7 +279,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testUpdateProdutoEstoque() {
+    public void testeAlterarEstoqueDeProduto() {
         Integer novoEstoque = 50;
         Produto mockUpdatedProduto = Produto.builder().id(produto1.getId()).build().updateData(produto1);
         mockUpdatedProduto.setEstoque(novoEstoque);
@@ -296,7 +296,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testUpdateProdutoPreco() {
+    public void testeAlterarPrecoDeProduto() {
         BigDecimal novoPreco = new BigDecimal("15.00");
         Produto mockUpdatedProduto = Produto.builder().id(produto1.getId()).build().updateData(produto1);
         mockUpdatedProduto.setPreco(novoPreco);
@@ -313,7 +313,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testDeleteProduto() {
+    public void testeRemoverProdutoPorIdProduto() {
         // Configura o mock
         doNothing().when(repository).deleteById(produto1.getId());
 
@@ -325,7 +325,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testDeleteInvalidProduto() {
+    public void testeRemoverProdutoComIdInvalido() {
         String idInvalido = UUID.randomUUID().toString();
         // Configura o mock
         doThrow(NoSuchElementException.class)
@@ -343,7 +343,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testCalculateInventoryValue() {
+    public void testeCalcularValorTotalDeInventario() {
         // Configura o mock
         doReturn(Arrays.asList(produto1, produto2, produto3))
                 .when(repository).findAll();
@@ -364,7 +364,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testFindProdutosWithLowEstoque() {
+    public void testeBuscarProdutosComNivelDeEstoqueBaixo() {
         // Configura o mock
         doReturn(Arrays.asList(produto2, produto3)).when(repository)
                     .findProdutosComEstoqueBaixo(10);
@@ -380,7 +380,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testCalculateInventoryValueWithNullEstoque() {
+    public void testeCalcularValorTotalDeInventarioComEstoqueNulo() {
         // Cria um produto com estoque nulo
         Produto produtoWithNullEstoque = new Produto();
         produtoWithNullEstoque.setId(UUID.randomUUID().toString());
@@ -404,7 +404,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testSaveProdutoWithZeroPreco() {
+    public void testeCriarProdutoComPrecoZerado() {
         // Cria um produto com preço zero
         Produto mockInvalidProduto = Produto.builder().id(produto1.getId()).build().updateData(produto1);
         mockInvalidProduto.setPreco(BigDecimal.ZERO);
@@ -429,7 +429,7 @@ public class ProdutoServiceTest {
     }
 
     @Test
-    public void testUpdateProdutoEstoqueWithNegativeValue() {
+    public void testeAlterarEstoqueDeProdutoComValorNegativo() {
         // Configura o mock
         Produto mockInvalidProduto = Produto.builder().id(produto1.getId()).build().updateData(produto1);
         mockInvalidProduto.setEstoque(-10);

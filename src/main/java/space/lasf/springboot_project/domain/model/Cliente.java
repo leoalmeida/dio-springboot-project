@@ -16,6 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -50,7 +51,7 @@ public class Cliente {
     @DBRef
     @Builder.Default
     @JsonIgnoreProperties("cliente")
-    //@JsonManagedReference
+    @JsonManagedReference
     private List<Pedido> pedidos = new ArrayList<>();
 
     public Cliente updateData(Cliente cliente) {

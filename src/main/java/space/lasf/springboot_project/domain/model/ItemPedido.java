@@ -17,6 +17,8 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 
 /**
  * Entidade que representa um item de pedido.
@@ -34,6 +36,7 @@ public class ItemPedido {
     @Id
     private String id;
     @DBRef
+    @JsonBackReference
     private Pedido pedido;
 
     @DBRef

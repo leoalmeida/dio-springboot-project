@@ -54,7 +54,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Transactional
     public Pedido criarPedido(String idCliente, List<ItemPedido> items) {
         if (idCliente == null ) {
-            throw new IllegalArgumentException("ID do cliente inválido: " + idCliente);
+            throw new IllegalArgumentException("ID do cliente não pode ser nulo.");
         }
         Cliente cliente = clienteRepository.findById(idCliente)
 				.orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
@@ -80,11 +80,11 @@ public class PedidoServiceImpl implements PedidoService {
         
         BigDecimal pedidoTotal = pedido.calcularTotalPedido();
         pedido.setValorTotalPedido(pedidoTotal);
+        cliente.incluirPedido(pedido);
+        
+        clienteRepository.save(cliente);
         
         Pedido newPedido = pedidoRepository.save(pedido);
-
-        cliente.getPedidos().add(newPedido);
-        clienteRepository.save(cliente);
         
         return newPedido;
     }
@@ -114,7 +114,7 @@ public class PedidoServiceImpl implements PedidoService {
         if (idCliente == null) {
             throw new IllegalArgumentException("ID do cliente inválido: " + idCliente);
         }
-        return pedidoRepository.findOrdersByClienteId(idCliente);
+        return pedidoRepository.findPedidosByIdCliente(idCliente);
     }
 
     @Override

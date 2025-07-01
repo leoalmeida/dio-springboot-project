@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import space.lasf.springboot_project.core.util.ObjectsValidator;
+import space.lasf.springboot_project.domain.model.Cliente;
 import space.lasf.springboot_project.dto.ClienteDto;
 import space.lasf.springboot_project.dto.mapper.ClienteMapper;
 import space.lasf.springboot_project.service.ClienteService;
@@ -70,9 +71,9 @@ public class ClienteController {
     }
 
     @GetMapping("/pesquisar")
-    public ResponseEntity<List<ClienteDto>> buscarClientesPorNome(@RequestParam String name) {
-        List<ClienteDto> clientes = ClienteMapper.toListClienteDto(
-                                clienteService.buscarClientesPorNome(name));
+    public ResponseEntity<List<ClienteDto>> buscarClientesPorNome(@RequestParam String nome) {
+        List<Cliente> listaClientes = clienteService.buscarClientesPorNome(nome);
+        List<ClienteDto> clientes = ClienteMapper.toListClienteDto(listaClientes);
         return ResponseEntity.ok(clientes);
     }
 

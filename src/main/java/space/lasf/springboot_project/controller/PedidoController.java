@@ -91,7 +91,7 @@ public class PedidoController {
 
         itemPedidoValidator.validate(item);
         ItemPedido itemEntity = ItemPedidoMapper.toItemPedidoEntity(item);
-        pedidoService.alterarItemPedido(idPedido, itemEntity);
+        pedidoService.incluirItemAoPedido(idPedido, itemEntity);
         return ResponseEntity.ok().build();
     }
 
@@ -128,11 +128,13 @@ public class PedidoController {
 
     @PostMapping("/{idPedido}/validar")
     public ResponseEntity<Map<String, Boolean>> validarPedido(@PathVariable String idPedido) {
-        Optional<PedidoDto> pedido = pedidoService.buscarPedidoPorId(idPedido)
-                        .map(PedidoMapper::toPedidoDto)
-                        .map(pedidoValidator::validate);
-        return (pedido.isPresent() && Status.PENDENTE.toString().compareTo(pedido.get().getStatus())==0)
-                            ?ResponseEntity.ok(Map.of(idPedido, true))
-                            :ResponseEntity.ok(Map.of(idPedido, false));
+        Optional<Pedido> pedido = pedidoService.buscarPedidoPorId(idPedido);
+        PedidoDto dto = PedidoMapper.toPedidoDto(pedido.get());
+        pedidoValidator.validate(dto);
+        Boolean validacaoPedido = (pedido.isPresent() && 
+                                Status.PENDENTE.toString().compareTo(dto.getStatus())==0);
+        return (validacaoPedido) 
+                    ?ResponseEntity.ok(Map.of(idPedido, true))
+                    :ResponseEntity.ok(Map.of(idPedido, false));
     }
 }

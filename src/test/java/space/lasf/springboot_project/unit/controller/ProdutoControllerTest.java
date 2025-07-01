@@ -1,14 +1,22 @@
 package space.lasf.springboot_project.unit.controller;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -26,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import space.lasf.springboot_project.base.TestFactory;
 import space.lasf.springboot_project.controller.ProdutoController;
 import space.lasf.springboot_project.core.util.ObjectsValidator;
+import space.lasf.springboot_project.domain.model.Pedido;
 import space.lasf.springboot_project.domain.model.Produto;
 import space.lasf.springboot_project.dto.ProdutoDto;
 import space.lasf.springboot_project.dto.mapper.ProdutoMapper;
@@ -50,6 +59,7 @@ public class ProdutoControllerTest extends TestFactory{
 
     private Produto produto1;
     private Produto produto2;
+    private List<Produto> produtoAssets = new ArrayList<Produto>();
 
     @BeforeEach
     public void setUp() {
@@ -57,6 +67,8 @@ public class ProdutoControllerTest extends TestFactory{
         // Cria produtos para testes
         produto1 = gerarProduto();
         produto2 = gerarProduto();
+        Produto produto3 = gerarProduto();
+        produtoAssets.addAll(Arrays.asList(produto1,produto2,produto3));
     }
 
     @Test
@@ -122,15 +134,19 @@ public class ProdutoControllerTest extends TestFactory{
 
     @Test
     public void deveRetornarValorTotalInventario() throws Exception {
+        // Configura entidade utilizada
+        BigDecimal totalInvetario = produtoAssets.stream()
+                                    .map(Produto::calcularTotalEstoque)
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         // Configura o mock
-        doReturn(new BigDecimal("1100.00"))
+        doReturn(totalInvetario)
             .when(produtoService).calcularValorInventario();
 
         // Executa e verificas
         mockMvc.perform(get("/api/produtos/total-inventario"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$", is(1100.00)));
+                .andExpect(content().string(totalInvetario.toString()));
 
         // Verifica se o método do serviço foi chamado
         verify(produtoService, times(1)).calcularValorInventario();
@@ -139,8 +155,7 @@ public class ProdutoControllerTest extends TestFactory{
     @Test
     public void deveRetornarProdutosDentroDaFaixaDePreco() throws Exception {
         // Configura o mock
-        doReturn(Arrays.asList(produto1, produto2))
-            .when(produtoService)
+        doReturn(Arrays.asList(produto1, produto2)).when(produtoService)
             .buscarProdutosPorFaixaDePreco(new BigDecimal("5.00"), new BigDecimal("25.00"));
         
         // Executa e verifica
@@ -160,113 +175,120 @@ public class ProdutoControllerTest extends TestFactory{
             new BigDecimal("5.00"), new BigDecimal("25.00"));
     }
 
-    
+	@Test
+    public void deveRetornarUmProdutoAPartirDoId() throws Exception {
+		// Configura entidade utilizada
+        Produto produtoSelecionado = produtoAssets.get(new Random().nextInt(this.produtoAssets.size()));
+        // Configura o mock
+        doReturn(Optional.of(produtoSelecionado)).when(produtoService).buscarProdutoPorId(produtoSelecionado.getId());
+		// Executa e verifica
+        mockMvc.perform(get("/api/produtos/{id}",produtoSelecionado.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.id", is(produtoSelecionado.getId())))
+                .andExpect(jsonPath("$.nome", is(produtoSelecionado.getNome())))
+                .andExpect(jsonPath("$.sku", is(produtoSelecionado.getSku())));
 
-//	  @Test
-//    public void deveRetornarUmPedidoAPartirDoId() throws Exception {
-//		// Configura o mock
-//        doReturn(produto1)
-//            .when(produtoService)
-//            .buscarProdutos();
-//		// Executa e verifica
-//        mockMvc.perform(get("/api/produtos/{id}"))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-//                .andExpect(jsonPath("$", hasSize(1)))
-//                .andExpect(jsonPath("$.id", is(produto1.getId()))
-//                .andExpect(jsonPath("$.nome", is(produto1.getNome())));
-//
-//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
-//        verify(produtoService, times(1)).buscarProdutos();
-//	}
-//	
-//	  @Test
-//    public void deveRetornarUmPedidoAPartirDoSkuDoProduto() throws Exception {}
-//		// Configura o mock
-//        doReturn(produto1)
-//            .when(produtoService)
-//            .buscarProdutos();
-//		// Executa e verifica
-//        mockMvc.perform(get("/api/produtos/sku/{sku}",produto1.getSku()))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-//                .andExpect(jsonPath("$", hasSize(1)))
-//                .andExpect(jsonPath("$.id", is(produto1.getId()))
-//                .andExpect(jsonPath("$.nome", is(produto1.getNome())));
-//
-//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
-//        verify(produtoService, times(1)).buscarProdutos();
-//	}
-//	  @Test
-//    deveAlterarOProdutoComIdSolicitado() throws Exception {}
-//		// Configura o mock
-//        doReturn(produto1)
-//            .when(produtoService)
-//            .buscarProdutos();
-//		// Executa e verifica
-//        mockMvc.perform(put("/api/produtos/{id}",produto1.getId()))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-//                .andExpect(jsonPath("$", hasSize(1)))
-//                .andExpect(jsonPath("$.id", is(produto1.getId()))
-//                .andExpect(jsonPath("$.nome", is(produto1.getNome())));
-//
-//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
-//        verify(produtoService, times(1)).buscarProdutos();
-//	}
-//
-//	  @Test
-//    public void deveRemoverOProdutoComIdSolicitado() throws Exception {}
-//		// Configura o mock
-//        doReturn(produto1)
-//            .when(produtoService)
-//            .buscarProdutos();
-//		// Executa e verifica
-//        mockMvc.perform(delete("/api/produtos/{id}",produto1.getId()))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-//                .andExpect(jsonPath("$", hasSize(1)))
-//                .andExpect(jsonPath("$.id", is(produto1.getId()))
-//                .andExpect(jsonPath("$.nome", is(produto1.getNome())));
-//
-//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
-//        verify(produtoService, times(1)).buscarProdutos();
-//	}
-//
-//	  @Test
-//    public void deveAlterarOEstoqueDoProdutoComIdSolicitado() throws Exception {}
-//		// Configura o mock
-//        doReturn(produto1)
-//            .when(produtoService)
-//            .buscarProdutos();
-//		// Executa e verifica
-//        mockMvc.perform(put("/api/produtos/{id}/estoque",produto1.getId()))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-//                .andExpect(jsonPath("$", hasSize(1)))
-//                .andExpect(jsonPath("$.id", is(produto1.getId()))
-//                .andExpect(jsonPath("$.nome", is(produto1.getNome())));
-//
-//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
-//        verify(produtoService, times(1)).buscarProdutos();
-//	}
-//
-//	  @Test
-//    public void deveAlterarOPrecoDoProdutoComIdSolicitado() throws Exception {}
-//		// Configura o mock
-//        doReturn(produto1)
-//            .when(produtoService)
-//            .buscarProdutos();
-//		// Executa e verifica
-//        mockMvc.perform(get("/api/produtos/{id}/preco",produto1.getId()))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-//                .andExpect(jsonPath("$", hasSize(1)))
-//                .andExpect(jsonPath("$.id", is(produto1.getId()))
-//                .andExpect(jsonPath("$.nome", is(produto1.getNome())));
-//
-//        // Verifica se o método do serviço foi chamado com os parâmetros corretos
-//        verify(produtoService, times(1)).buscarProdutos();
-//	}
+        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+        verify(produtoService, times(1))
+            .buscarProdutoPorId(produtoSelecionado.getId());
+	}
+	
+	@Test
+    public void deveRetornarUmProdutoAPartirDoSkuDoProduto() throws Exception {
+		// Configura entidade utilizada
+        Produto produtoSelecionado = produtoAssets.get(new Random().nextInt(this.produtoAssets.size()));
+        // Configura o mock
+        doReturn(Optional.of(produtoSelecionado)).when(produtoService)
+            .buscarProdutoPorSku(produtoSelecionado.getSku());
+		// Executa e verifica
+        mockMvc.perform(get("/api/produtos/sku/{sku}",produtoSelecionado.getSku()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.id", is(produtoSelecionado.getId())))
+                .andExpect(jsonPath("$.nome", is(produtoSelecionado.getNome())))
+                .andExpect(jsonPath("$.sku", is(produtoSelecionado.getSku())));
+
+        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+        verify(produtoService, times(1))
+            .buscarProdutoPorSku(produtoSelecionado.getSku());
+	}
+	@Test
+    public void deveAlterarOProdutoComIdSolicitado() throws Exception {
+		// Configura entidade utilizada
+        Produto produtoAlterado = produtoAssets.get(new Random().nextInt(this.produtoAssets.size()));
+        produtoAlterado.setNome("Produto Alterado");
+        produtoAlterado.setPreco(new BigDecimal("100.00"));
+        // Configura o mock
+        doReturn(produtoAlterado).when(produtoService)
+                .alterarProduto(produtoAlterado);
+        doReturn(Optional.of(produtoAlterado)).when(produtoService)
+                .buscarProdutoPorId(produtoAlterado.getId());
+		// Executa e verifica
+        mockMvc.perform(put("/api/produtos/{id}",produtoAlterado.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(ProdutoMapper.toProdutoDto(produtoAlterado))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.id", is(produtoAlterado.getId())))
+                .andExpect(jsonPath("$.nome", is(produtoAlterado.getNome())))
+                .andExpect(jsonPath("$.sku", is(produtoAlterado.getSku())));
+
+        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+        verify(produtoService, times(1))
+                .alterarProduto(produtoAlterado);
+        verify(produtoService, times(1))
+                .buscarProdutoPorId(produtoAlterado.getId());
+	}
+
+	@Test
+    public void deveRemoverOProdutoComIdSolicitado() throws Exception {
+		// Configura entidade utilizada
+        Produto produtoRemovido = produtoAssets.get(new Random().nextInt(this.produtoAssets.size()));
+        // Configura o mock
+        doNothing().when(produtoService)
+            .removerProduto(produtoRemovido.getId());
+		// Executa e verifica
+        mockMvc.perform(delete("/api/produtos/{id}",produtoRemovido.getId()))
+                .andExpect(status().isNoContent());
+
+        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+        verify(produtoService, times(1))
+            .removerProduto(produtoRemovido.getId());
+	}
+
+	  @Test
+    public void deveAlterarOEstoqueDoProdutoComIdSolicitado() throws Exception {
+		// Configura entidade utilizada
+        Produto produtoAlterado = produtoAssets.get(new Random().nextInt(this.produtoAssets.size()));
+        // Configura o mock
+        doNothing().when(produtoService)
+            .alterarEstoqueProduto(produtoAlterado.getId(), 20);
+		// Executa e verifica
+        mockMvc.perform(put("/api/produtos/{id}/estoque",produtoAlterado.getId())
+                .param("estoque", "20"))
+                .andExpect(status().isOk());
+
+        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+        verify(produtoService, times(1))
+            .alterarEstoqueProduto(produtoAlterado.getId(), 20);
+	}
+
+	  @Test
+    public void deveAlterarOPrecoDoProdutoComIdSolicitado() throws Exception {
+		// Configura entidade utilizada
+        Produto produtoAlterado = produtoAssets.get(new Random().nextInt(this.produtoAssets.size()));
+        // Configura o mock
+        doNothing().when(produtoService)
+            .alterarPrecoProduto(produtoAlterado.getId(), new BigDecimal("75.00"));
+		// Executa e verifica
+        mockMvc.perform(put("/api/produtos/{id}/preco",produtoAlterado.getId())
+                        .param("preco", "75.00"))
+                .andExpect(status().isOk());
+
+        // Verifica se o método do serviço foi chamado com os parâmetros corretos
+        verify(produtoService, times(1))
+            .alterarPrecoProduto(produtoAlterado.getId(), new BigDecimal("75.00"));
+	}
 
 }

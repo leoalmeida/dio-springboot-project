@@ -1,0 +1,53 @@
+name: Entrega Continua
+
+on:
+  workflow_call:
+
+jobs:
+  ECS:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configurar Credenciais AWS
+      uses: aws-actions/configure-aws-credentials@v4.1.0
+      with:
+        aws-region: us-east-2
+        aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+        aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+        
+    - name: Obter arquivos de task definition
+      run: aws ecs describe-task-definition --task-definition Tarefa_API-nodejs --query taskDefinition > task-definition.json
+    
+    - name: Cópia do task definition
+      run: cp task-definition.json task-definition.json.bkp
+    
+    - name: Fill new image in ECS task def
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: api-nodejs
+        image: leoalmeida/backend:${{github.run_number}}
+        environment-variables: |
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+
+    - name: Deploy Amazon ECS task def
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: Tarefa_API-nodejs-service-gzpwz55b
+        cluster: API-NodeJS
+        wait-for-service-stability: true
+    
+    #- name: Requisição de teste
+    #  continue-on-error: true
+    #  run: echo "REQUEST=0" >> $GITHUB_ENV; sleep 30s; wget LB-API-Go-1678230555.us-east-2.elb.amazonaws.com:8000/alunos || echo "REQUEST=1" >> $GITHUB_ENV
+
+    #- name: Rollback Amazon ECS task def
+    #  if: ${{ env.REQUEST != 0 }}
+    #  uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+    #  with:
+    #    task-definition: task-defintion.json.bkp
+    #    service: Tarefa_API-nodejs-service-gzpwz55b
+    #    cluster: API-NodeJS
+    #    wait-for-service-stability: true
+    

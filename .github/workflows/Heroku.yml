@@ -1,0 +1,17 @@
+name: Heroku
+
+on:
+  workflow_call:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Connect to Heroku
+      uses: akhileshns/heroku-deploy@v3.12.12
+      with:
+        heroku_api_key: ${{ secrets.secrets.HEROKU_API_KEY }}
+        heroku_email: ${{ secrets.secrets.HEROKU_EMAIL }}
+        heroku_app_name: ${{ secrets.secrets.HEROKU_APP }}
+

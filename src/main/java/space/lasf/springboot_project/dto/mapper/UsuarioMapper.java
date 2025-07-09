@@ -41,27 +41,21 @@ public class UsuarioMapper {
 	
 	public static List<UsuarioDto> toListUsuarioDto(List<Usuario> usuarioEntities) {
 
-		List<UsuarioDto> list = new ArrayList<UsuarioDto>();
-
-		if(usuarioEntities != null) {
-			usuarioEntities.stream().forEach(usuario -> {
-				list.add(UsuarioMapper.toUsuarioDto(usuario));
-			});
+		if (usuarioEntities == null) {
+			return new ArrayList<>();
 		}
-
-		return list;
+		return usuarioEntities.stream()
+				.map(UsuarioMapper::toUsuarioDto)
+				.toList();
 	}
 
 	public static List<Usuario> toListUsuarioEntity(List<UsuarioDto> usuarioDtos) {
 
-		List<Usuario> list = new ArrayList<Usuario>();
-
-		if(usuarioDtos != null) {
-			usuarioDtos.stream().forEach(usuario -> {
-				list.add(UsuarioMapper.toUsuarioEntity(usuario));
-			});
+		if (usuarioDtos == null) {
+			return new ArrayList<>();
 		}
-
-		return list;
+		return usuarioDtos.stream()
+				.map(UsuarioMapper::toUsuarioEntity)
+				.toList();
 	}
 }

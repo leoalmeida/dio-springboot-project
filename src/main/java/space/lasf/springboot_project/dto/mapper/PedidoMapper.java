@@ -53,27 +53,21 @@ public class PedidoMapper {
 	
 	public static List<PedidoDto> toListPedidoDto(List<Pedido> pedidos) {
 
-		List<PedidoDto> list = new ArrayList<PedidoDto>();
-
-		if(pedidos != null) {
-			pedidos.stream().forEach(pedido -> {
-				list.add(PedidoMapper.toPedidoDto(pedido));
-			});
+		if (pedidos == null) {
+			return new ArrayList<>();
 		}
-
-		return list;
+		return pedidos.stream()
+				.map(PedidoMapper::toPedidoDto)
+				.toList();
 	}
 
 	public static List<Pedido> toListPedidoEntity(List<PedidoDto> pedidoDtos) {
 
-		List<Pedido> list = new ArrayList<Pedido>();
-
-		if(pedidoDtos != null) {
-			pedidoDtos.stream().forEach(pedido -> {
-				list.add(PedidoMapper.toPedidoEntity(pedido));
-			});
+		if (pedidoDtos == null) {
+			return new ArrayList<>();
 		}
-
-		return list;
+		return pedidoDtos.stream()
+				.map(PedidoMapper::toPedidoEntity)
+				.toList();
 	}
 }

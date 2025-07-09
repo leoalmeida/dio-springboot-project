@@ -129,12 +129,14 @@ public class PedidoController {
     @PostMapping("/{idPedido}/validar")
     public ResponseEntity<Map<String, Boolean>> validarPedido(@PathVariable String idPedido) {
         Optional<Pedido> pedido = pedidoService.buscarPedidoPorId(idPedido);
+        if (pedido.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
         PedidoDto dto = PedidoMapper.toPedidoDto(pedido.get());
         pedidoValidator.validate(dto);
-        Boolean validacaoPedido = (pedido.isPresent() && 
-                                Status.PENDENTE.toString().compareTo(dto.getStatus())==0);
-        return (validacaoPedido) 
-                    ?ResponseEntity.ok(Map.of(idPedido, true))
-                    :ResponseEntity.ok(Map.of(idPedido, false));
+        boolean isValid = Status.PENDENTE.name().equals(dto.getStatus());
+
+        return ResponseEntity.ok(Map.of(idPedido, isValid));
     }
 }

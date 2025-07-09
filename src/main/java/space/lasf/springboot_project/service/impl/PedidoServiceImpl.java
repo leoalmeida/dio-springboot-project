@@ -33,22 +33,11 @@ import space.lasf.springboot_project.service.PedidoService;
 @RequiredArgsConstructor
 public class PedidoServiceImpl implements PedidoService {
 
-    @Autowired
-    private ProdutoRepository produtoRepository;
-    
-    @Autowired
-    private ClienteRepository clienteRepository;
-    
-    @Autowired
-    private PedidoRepository pedidoRepository;
-    
-    @Autowired
-    private ItemPedidoRepository itemPedidoRepository;
-    
-    @Autowired
-    private ObjectsValidator<ItemPedido> validadorDeItem;
-
-    private static Integer proximoIdPedido = 1;
+    private final ProdutoRepository produtoRepository;
+    private final ClienteRepository clienteRepository;
+    private final PedidoRepository pedidoRepository;
+    private final ItemPedidoRepository itemPedidoRepository;
+    private final ObjectsValidator<ItemPedido> validadorDeItem;
 
     @Override
     @Transactional
@@ -65,6 +54,7 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setNumeroPedido(gerarNumeroPedido());
         pedido.setCliente(cliente);
 
+        List<ItemPedido> itemsToSave = new ArrayList<>();
         // Adiciona os itens ao pedido
         if (items != null && !items.isEmpty()) {
             items.forEach(item -> {
@@ -73,9 +63,9 @@ public class PedidoServiceImpl implements PedidoService {
                 // Associa o item ao pedido
                 item.updateSubtotal();
                 pedido.incluirItemPedido(item);
-
-                itemPedidoRepository.save(item);
+                itemsToSave.add(item);
             });
+            itemPedidoRepository.saveAll(itemsToSave);
         }
         
         BigDecimal pedidoTotal = pedido.calcularTotalPedido();
@@ -195,19 +185,27 @@ public class PedidoServiceImpl implements PedidoService {
         Pedido pedidoAlterado = buscarPedidoPorId(idPedido)
             .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado com o id: " + idPedido));
 
-        Map<String, Integer> stats = getQuantidadeVendida(pedidoAlterado.getItemsPedido());
+        if (pedidoAlterado.getStatus() != Status.PENDENTE) {
+            throw new IllegalStateException("Apenas pedidos com status PENDENTE podem ser finalizados.");
+        }
 
-        //Atualiza estoque dos produtos vendidos no pedido
-        List<Produto> listaProdutos = new ArrayList<>();
-        stats.entrySet().forEach(produto -> {
-            Optional<Produto> opt = produtoRepository.findById(produto.getKey());
-            if (opt.isPresent()){
-                Produto changedProd = opt.get();
-                changedProd.setEstoque(changedProd.getEstoque()-produto.getValue());
-                listaProdutos.add(changedProd);
+        Map<String, Integer> quantidadePorProdutoId = getQuantidadeVendida(pedidoAlterado.getItemsPedido());
+        List<String> produtoIds = new ArrayList<>(quantidadePorProdutoId.keySet());
+        List<Produto> produtosDoPedido = produtoRepository.findAllById(produtoIds);
+
+        if (produtoIds.size() != produtosDoPedido.size()) {
+            throw new IllegalStateException("Um ou mais produtos do pedido não foram encontrados.");
+        }
+
+        for (Produto produto : produtosDoPedido) {
+            int quantidadePedida = quantidadePorProdutoId.get(produto.getId());
+            if (produto.getEstoque() < quantidadePedida) {
+                throw new IllegalStateException("Estoque insuficiente para o produto: " + produto.getNome());
             }
-        });
-        produtoRepository.saveAll(listaProdutos);
+            produto.setEstoque(produto.getEstoque() - quantidadePedida);
+        }
+
+        produtoRepository.saveAll(produtosDoPedido);
 
         // Atualiza o valor total do pedido
         pedidoAlterado.setValorTotalPedido(pedidoAlterado.calcularTotalPedido());
@@ -226,14 +224,17 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     private String gerarNumeroPedido() {
-        return String.format("ORD-%02d%04d", LocalDateTime.now().getDayOfMonth(), proximoIdPedido++);
+        // Example: ORD-20240724-9F3B
+        String datePart = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String randomPart = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+        return String.format("ORD-%s-%s", datePart, randomPart);
     }
 
     private boolean validarNumeroPedido(String pedidoNumber) {
-        return pedidoNumber != null && !pedidoNumber.isEmpty() && pedidoNumber.matches("ORD-[0-9]{1,2}[0-9]{4}");
+        return pedidoNumber != null && pedidoNumber.matches("ORD-\\d{8}-[A-Z0-9]{4}");
     }
 
-    public static Map<String, Integer> getQuantidadeVendida(List<ItemPedido> items) {
+    private Map<String, Integer> getQuantidadeVendida(List<ItemPedido> items) {
         Map<String, Integer> statistics = 
             items.stream().collect(Collectors.groupingBy(
                 item -> item.getProduto().getId(),

@@ -23,12 +23,8 @@ import space.lasf.springboot_project.service.ClienteService;
 @RequiredArgsConstructor
 public class ClienteServiceImpl implements ClienteService {
  
-    @Autowired
-    private ClienteRepository clienteRepository;
-    
-    @Autowired
-    private ObjectsValidator<Cliente> validadorDeCliente;
-    
+    private final ClienteRepository clienteRepository;
+    private final ObjectsValidator<Cliente> validadorDeCliente;
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9+_.-]+\\.[a-z]{2,4}$");
 
     @Override

@@ -1,4 +1,4 @@
-package space.lasf.springboot_project.integration.service;
+package space.lasf.springboot_project.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,8 +28,8 @@ import space.lasf.springboot_project.base.TestFactory;
 import space.lasf.springboot_project.core.util.ObjectsValidator;
 import space.lasf.springboot_project.domain.model.Cliente;
 import space.lasf.springboot_project.domain.model.Pedido;
+import space.lasf.springboot_project.domain.repository.ClienteRepository;
 import space.lasf.springboot_project.service.ClienteService;
-import space.lasf.springboot_project.service.impl.ClienteServiceImpl;
 
 //@ExtendWith(SpringExtension.class)
 @DataMongoTest
@@ -38,14 +38,19 @@ public class ClienteServiceImplIntegrationTest extends TestFactory{
 
    @TestConfiguration
     static class ClienteServiceImplTestContextConfiguration {
+
+        @Autowired
+        ClienteRepository clientRepository;
+        
         @Bean
         public ClienteService clienteService() {
-            return new ClienteServiceImpl();
+            return new ClienteServiceImpl(clientRepository,validadorDeCliente());
         }
         @Bean 
         public ObjectsValidator<Cliente> validadorDeCliente(){
             return new ObjectsValidator<Cliente>();
         };
+        
     }
 
     @Autowired

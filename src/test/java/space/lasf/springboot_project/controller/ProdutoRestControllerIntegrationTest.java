@@ -1,6 +1,7 @@
-package space.lasf.springboot_project.component.controller;
+package space.lasf.springboot_project.controller;
 
 import static org.mockito.Mockito.doReturn;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,41 +23,44 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import space.lasf.springboot_project.domain.repository.UsuarioRepository;
-import space.lasf.springboot_project.dto.UsuarioDto;
-import space.lasf.springboot_project.service.UsuarioService;
+import space.lasf.springboot_project.domain.repository.ProdutoRepository;
+import space.lasf.springboot_project.dto.ProdutoDto;
+import space.lasf.springboot_project.dto.mapper.ProdutoMapper;
+import space.lasf.springboot_project.service.ProdutoService;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class UsuarioRestControllerIntegrationTest  {
+public class ProdutoRestControllerIntegrationTest  {
 
     @Autowired
     private MockMvc mvc;
 
     @Autowired
-    private UsuarioRepository repository;
-    
+    private ProdutoRepository repository;
+
     @MockitoBean
-    private UsuarioService service;
+    private ProdutoService service;
+
 
     @Test
-    public void testeProduto_quandoConsultarProdutos_thenStatus200()
+    public void testeProduto_quandoConsultarTodosProdutos_entaoRetornaProdutosComSucesso()
       throws Exception {
 
-        UsuarioDto usuario1 = new UsuarioDto("Produto1","email@test.com","user1","pass");
-        UsuarioDto usuario2 = new UsuarioDto("Produto1","email2@test.com","user2","pass");
-        List<UsuarioDto> todosUsuarios = Arrays.asList(usuario1,usuario2);
+        ProdutoDto produto1 = ProdutoDto.builder().nome("Produto1").build();
+        ProdutoDto produto2 = ProdutoDto.builder().nome("Produto2").build();
+        List<ProdutoDto> todosProdutos = Arrays.asList(produto1,produto2);
 
-        doReturn(todosUsuarios)
-          .when(service).listarUsuarios();
+        doReturn(ProdutoMapper.toListProdutoEntity(todosProdutos))
+          .when(service).buscarTodosProdutos();
 
-        mvc.perform(get("/api/usuarios"))
+        mvc.perform(get("/api/produtos"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].login", is("user1")))
-                .andExpect(jsonPath("$[1].login", is("user2")));
+                .andExpect(jsonPath("$[0].nome", is("Produto1")))
+                .andExpect(jsonPath("$[1].nome", is("Produto2")));
     }
+    
 }

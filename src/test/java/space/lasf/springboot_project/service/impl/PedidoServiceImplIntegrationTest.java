@@ -1,4 +1,4 @@
-package space.lasf.springboot_project.integration.service;
+package space.lasf.springboot_project.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -29,10 +29,12 @@ import space.lasf.springboot_project.domain.model.Cliente;
 import space.lasf.springboot_project.domain.model.ItemPedido;
 import space.lasf.springboot_project.domain.model.Pedido;
 import space.lasf.springboot_project.domain.model.Produto;
+import space.lasf.springboot_project.domain.repository.ClienteRepository;
+import space.lasf.springboot_project.domain.repository.ItemPedidoRepository;
+import space.lasf.springboot_project.domain.repository.PedidoRepository;
+import space.lasf.springboot_project.domain.repository.ProdutoRepository;
 import space.lasf.springboot_project.service.PedidoService;
 import space.lasf.springboot_project.service.ProdutoService;
-import space.lasf.springboot_project.service.impl.PedidoServiceImpl;
-import space.lasf.springboot_project.service.impl.ProdutoServiceImpl;
 
 @DataMongoTest
 @ActiveProfiles("test")
@@ -40,9 +42,22 @@ public class PedidoServiceImplIntegrationTest extends TestFactory{
 
     @TestConfiguration
     static class PedidoServiceImplTestContextConfiguration {
+
+        @Autowired
+        ProdutoRepository produtoRepository;
+
+        @Autowired
+        ClienteRepository clienteRepository;
+        
+        @Autowired
+        PedidoRepository pedidoRepository;
+        
+        @Autowired
+        ItemPedidoRepository itemPedidoRepository; 
+
         @Bean
         public PedidoService pedidoService() {
-            return new PedidoServiceImpl();
+            return new PedidoServiceImpl(produtoRepository,clienteRepository,pedidoRepository,itemPedidoRepository,validadorDeItem());
         }
         @Bean
         public ProdutoService produtoService() {

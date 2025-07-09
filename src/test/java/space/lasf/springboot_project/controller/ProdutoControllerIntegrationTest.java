@@ -1,4 +1,4 @@
-package space.lasf.springboot_project.integration.controller;
+package space.lasf.springboot_project.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

@@ -14,8 +14,9 @@ import space.lasf.springboot_project.DioSpringbootProjectApplication;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = DioSpringbootProjectApplication.class)
 @ActiveProfiles("test")
-@TestPropertySource(properties = { "logging.level.org.springframework=DEBUG",
-    "logging.level.org.hibernate=DEBUG" })
+@TestPropertySource(properties = { 
+	"logging.level.org.springframework=INFO",
+    "logging.level.org.hibernate=WARN" })
 class DioSpringbootProjectApplicationTests {
 
 	@Test

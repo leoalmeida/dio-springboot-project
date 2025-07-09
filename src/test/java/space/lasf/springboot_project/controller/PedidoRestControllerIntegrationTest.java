@@ -1,9 +1,10 @@
-package space.lasf.springboot_project.component.controller;
+package space.lasf.springboot_project.controller;
 
 import static org.mockito.Mockito.doReturn;
 
 import java.util.Arrays;
 import java.util.List;
+
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasSize;
@@ -23,44 +24,48 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import space.lasf.springboot_project.domain.repository.ProdutoRepository;
-import space.lasf.springboot_project.dto.ProdutoDto;
-import space.lasf.springboot_project.dto.mapper.ProdutoMapper;
-import space.lasf.springboot_project.service.ProdutoService;
+import space.lasf.springboot_project.domain.model.Status;
+import space.lasf.springboot_project.domain.repository.PedidoRepository;
+import space.lasf.springboot_project.dto.PedidoDto;
+import space.lasf.springboot_project.dto.mapper.PedidoMapper;
+import space.lasf.springboot_project.service.PedidoService;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class ProdutoRestControllerIntegrationTest  {
+public class PedidoRestControllerIntegrationTest {
 
     @Autowired
     private MockMvc mvc;
 
     @Autowired
-    private ProdutoRepository repository;
+    private PedidoRepository repository;
 
     @MockitoBean
-    private ProdutoService service;
-
+    private PedidoService service;
 
     @Test
-    public void testeProduto_quandoConsultarTodosProdutos_entaoRetornaProdutosComSucesso()
+    public void testePedido_quandoConsultarTodosPedidos_entaoRetornaPedidosComSucesso()
       throws Exception {
 
-        ProdutoDto produto1 = ProdutoDto.builder().nome("Produto1").build();
-        ProdutoDto produto2 = ProdutoDto.builder().nome("Produto2").build();
-        List<ProdutoDto> todosProdutos = Arrays.asList(produto1,produto2);
+        PedidoDto pedido1 = PedidoDto.builder()
+                          .status(Status.PENDENTE.name())
+                          .numeroPedido("ORD-170001").build();
+        PedidoDto pedido2 = PedidoDto.builder()
+                        .status(Status.PENDENTE.name())
+                        .numeroPedido("ORD-170002").build();
+        List<PedidoDto> todosPedidos = Arrays.asList(pedido1,pedido2);
 
-        doReturn(ProdutoMapper.toListProdutoEntity(todosProdutos))
-          .when(service).buscarTodosProdutos();
+        doReturn(PedidoMapper.toListPedidoEntity(todosPedidos))
+          .when(service).buscarTodosPedidos();
 
-        mvc.perform(get("/api/produtos"))
+        mvc.perform(get("/api/pedidos"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].nome", is("Produto1")))
-                .andExpect(jsonPath("$[1].nome", is("Produto2")));
+                .andExpect(jsonPath("$[0].numeroPedido", is("ORD-170001")))
+                .andExpect(jsonPath("$[1].numeroPedido", is("ORD-170002")));
     }
     
 }

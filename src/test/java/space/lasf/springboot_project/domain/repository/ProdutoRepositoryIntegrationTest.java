@@ -1,4 +1,4 @@
-package space.lasf.springboot_project.integration.repository;
+package space.lasf.springboot_project.domain.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

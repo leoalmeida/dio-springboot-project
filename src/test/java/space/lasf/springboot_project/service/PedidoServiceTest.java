@@ -1,4 +1,4 @@
-package space.lasf.springboot_project.unit.service;
+package space.lasf.springboot_project.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -149,8 +149,9 @@ public class PedidoServiceTest  extends TestFactory{
 
     @Test
     public void testeCriacaoDePedidoParaUmIdClienteNulo() {
+        String idClienteNulo = null;
         // Configura o mock para retornar um cliente vazio
-        doReturn(Optional.empty()).when(pedidosRepository).findById(null);
+        doReturn(Optional.empty()).when(pedidosRepository).findById(idClienteNulo);
 
         // Chamada ao serviço que deve lançar uma IllegalArgumentException
         Throwable  throwable  = 
